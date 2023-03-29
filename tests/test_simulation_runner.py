@@ -9,6 +9,7 @@ from src.notifier import Status
 
 
 class SimulationRunnerTest(unittest.IsolatedAsyncioTestCase):
+    # FIX: bad test dependency
     EXECUTABLE: str = '/media/gataullin/FLASHKA/Project/simulation-core/build/simulation'
     MODEL_FILE: str = 'model.xml'
 
@@ -20,12 +21,18 @@ class SimulationRunnerTest(unittest.IsolatedAsyncioTestCase):
         self.temp_test_dir = os.path.join(os.getcwd(), 'tests')
         self.runner = SimulationRunner(self.EXECUTABLE, self.notifier)
 
+    def tearDown(self):
+        self.runner.stop()
+        # Clean-up results of simulation
+        for file in os.listdir(self.temp_test_dir):
+            if file.endswith('txt'):
+                os.remove(os.path.join(self.temp_test_dir, file))
+
     async def test_run(self):
         self.runner.run(self.temp_test_dir, self.MODEL_FILE)
         self.assertTrue(self.runner.is_running())
 
         await self.runner.wait()
-
         self.assertFalse(self.runner.is_running())
 
         # assert has logs

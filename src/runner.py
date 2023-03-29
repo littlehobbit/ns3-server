@@ -5,7 +5,7 @@ class Runner(ABC):
     """ Class for running simulation and provice access to logs and so on """
 
     @abstractmethod
-    def run(self,   cwd: str):
+    def run(self, cwd: str, model_file: str):
         pass
 
     @abstractmethod

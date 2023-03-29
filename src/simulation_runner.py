@@ -73,15 +73,3 @@ class SimulationRunner(Runner):
         except asyncio.CancelledError as cancel:
             if process.poll() is None:
                 process.send_signal(SIGSTOP)
-
-# def _loop():
-#     loop = asyncio.new_event_loop()
-#     loop.run_forever()
-
-# thread = Thread(target=_loop)
-
-# try:
-#     thread.run()
-# except (KeyboardInterrupt, SystemExit):
-#     # Stop Thread when CTRL + C is pressed or when program is exited
-#     thread.join()
