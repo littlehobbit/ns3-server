@@ -19,11 +19,11 @@ class Simulation:
 
         try:
             self.runner.run(workdir)
+            resulted_zip = self.uploader.upload(workdir)
         except RuntimeError as err:
             self.notifier.send(Status.ERROR, str(err))
             return
 
-        resulted_zip = self.uploader.upload(workdir)
         self.notifier.send(Status.UPLOADED, resulted_zip)
         self.notifier.send(Status.END)
 
