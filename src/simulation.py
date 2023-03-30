@@ -14,13 +14,14 @@ class Simulation:
         self.uploader = uploader
         self.notifier = notifier
 
-    def run(self, workdir: str):
+    async def run(self, workdir: str, file_name: str):
         self.notifier.send(Status.START)
 
         try:
-            self.runner.run(workdir)
+            self.runner.run(workdir, file_name)
+            await self.runner.wait()
             resulted_zip = self.uploader.upload(workdir)
-        except RuntimeError as err:
+        except Exception as err:
             self.notifier.send(Status.ERROR, str(err))
             return
 

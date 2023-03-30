@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="udp_echo">
+  <populate-routing-tables>true</populate-routing-tables>
+  <duration>20s</duration>
+  <precision>NS</precision>
+
+  <node id="0" name="Client">
+    <device-list>
+      <device id="0"
+              name="eth0" 
+              type="Csma" >  
+        <address value="10.1.22.222" netmask="255.255.255.0"/>
+
+        <attributes>
+          <attribute key="TxQueue" value="ns3::DropTailQueue&lt;Packet&gt;[MaxSize=100p]"/>
+          <attribute key="Address" value="AB:CD:EF:01:02:03"/>
+          <attribute key="Mtu" value="1200"/>
+          <attribute key="EncapsulationMode" value="Llc"/>
+        </attributes>
+      </device>
+    </device-list>
+
+    <applications>
+      <application name="Sender" type="ns3::OnOffApplication">
+        <attributes>
+          <attribute key="Remote" value="0-7-0A:01:16:02:9a:02:00"/>
+          <attribute key="Protocol" value="ns3::TcpSocketFactory"/>
+          <attribute key="OnTime" value="ns3::ConstantRandomVariable[Constant=15.0]"/>
+          <attribute key="OffTime" value="ns3::ConstantRandomVariable[Constant=1.0]"/>
+          <attribute key="DataRate" value="10Mbps"/>
+        </attributes>
+      </application>
+    </applications>
+  </node>
+
+  <node id="1" name="Server">
+    <device-list>
+      <device id="0" name="eth0" type="Csma">
+        <address value="10.1.22.2" netmask="255.255.255.0"/>
+          <attributes>
+            <attribute key="TxQueue" value="ns3::DropTailQueue&lt;Packet&gt;[MaxSize=100p]"/>
+            <attribute key="Mtu" value="1200"/>
+            <attribute key="EncapsulationMode" value="Llc"/>
+          </attributes>
+      </device>
+    </device-list>
+    
+    <applications>
+      <application name="Sink" type="ns3::PacketSink">
+        <attributes>
+          <attribute key="Protocol" value="ns3::TcpSocketFactory"/>
+          <attribute key="Local" value="0-7-00:00:00:00:9a:02:00"/>
+        </attributes>
+      </application>
+    </applications>
+  </node>
+
+  <connections>
+    <connection id="0" name="Client-to-Server" type="Csma">
+      <interfaces>
+        <interface>Client/eth0</interface>
+        <interface>Server/eth0</interface>
+      </interfaces>
+
+      <attributes>
+        <attribute key="DataRate" value="2Mbps"/>
+      </attributes>
+    </connection>
+  </connections>
+
+  <statistics>
+  <!-- TODO: listen tcp socket congestion window -->
+    <registrator value_name="CWND" 
+                 type="ns3::Uinteger32Probe" 
+                 source="/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow" 
+                 start="1s" 
+                 file="cwnd"/>
+
+    <registrator value_name="Bytes" 
+                  type="ns3::Ipv4PacketProbe" 
+                 source="/NodeList/0/$ns3::Ipv4L3Protocol/Tx" 
+                 start="0s" 
+                 file="sender_interface_write" 
+                 sink="OutputBytes"/>
+  </statistics>
+</model>

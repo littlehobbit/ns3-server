@@ -13,5 +13,5 @@ class Status(Enum):
 
 class Notifier(ABC):
     @abstractmethod
-    def send(self, status: Status, msg: str):
+    def send(self, status: Status, msg: str = ''):
         pass

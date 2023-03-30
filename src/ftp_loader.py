@@ -18,6 +18,7 @@ class FtpLoader(Uploader):
         self.ftp = FTP()
 
     def connect(self):
+        # TODO: move connect to upload function
         try:
             self.ftp.connect(self.address)
             self.ftp.login(self.user, self.password)
@@ -30,7 +31,8 @@ class FtpLoader(Uploader):
 
     def upload(self, results: str) -> str:
         """ zip & upload result directory """
-
+        # BUG: Ftp timeout error 
+        # TODO: make connect on every result uploading
         try:
             archive_path = self._make_archive(results)
             archive_name = os.path.basename(archive_path)
