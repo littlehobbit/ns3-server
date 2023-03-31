@@ -36,8 +36,6 @@ ws = SocketIO(app, async_mode='eventlet')
 
 notifier = WebSocketNotifier(ws)
 ftp_loader = FtpLoader(FTP_SERVER, FTP_USER, FTP_PASSWORD)
-ftp_loader.connect()
-
 
 runner = SimulationRunner(SIMULATION_EXECUTABLE, notifier)
 simulation = Simulation(runner, ftp_loader, notifier)
@@ -71,7 +69,7 @@ async def start_simulation():
     config = os.path.join(workdir, 'model.xml')
     info(f'Write xml configuration to {config}')
     with open(config, 'wb') as config_file:
-      config_file.write(xml_input)
+        config_file.write(xml_input)
 
     # TODO: make running of simulation asyncroous - no wait until simulation will end
     await simulation.run(workdir, config)

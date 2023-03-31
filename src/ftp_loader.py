@@ -9,39 +9,24 @@ class FtpLoader(Uploader):
     address: str
     user: str
     password: str
-    ftp: FTP
 
     def __init__(self, address: str, user: str, password: str):
         self.address = address
         self.user = user
         self.password = password
-        self.ftp = FTP()
-
-    def connect(self):
-        # TODO: move connect to upload function
-        try:
-            self.ftp.connect(self.address)
-            self.ftp.login(self.user, self.password)
-        except Exception as err:
-            self.close()
-            raise UploadError(err)
-
-    def close(self):
-        self.ftp.close()
 
     def upload(self, results: str) -> str:
         """ zip & upload result directory """
-        # BUG: Ftp timeout error 
-        # TODO: make connect on every result uploading
         try:
-            archive_path = self._make_archive(results)
-            archive_name = os.path.basename(archive_path)
-            with open(archive_path, 'rb') as file:
-                self.ftp.storbinary(f'STOR {archive_name}', file)
-            return archive_name
+            with FTP(self.address, self.user, self.password) as ftp:
+                archive_path = self._make_archive(results)
+                archive_name = os.path.basename(archive_path)
+                with open(archive_path, 'rb') as file:
+                    ftp.storbinary(f'STOR {archive_name}', file)
+                return archive_name
         except Exception as err:
-            raise UploadError(err)
-    
+            raise UploadError(f'Uploading error: {err}')
+
     def _make_archive(self, path: str) -> str:
         output_filename = path + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:

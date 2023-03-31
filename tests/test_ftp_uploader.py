@@ -6,10 +6,11 @@ from src.uploader import Uploader, UploadError
 
 
 class TestFtpLoader(unittest.TestCase):
-    test_dir = os.path.join(os.getcwd(), 'tests')
-    address: str = '127.0.0.1'
-    user: str = 'test_user'
-    password: str = 'test_user_password'
+    TEST_DIR = os.path.join(os.getcwd(), 'tests')
+    ADDRESS: str = '127.0.0.1'
+    USER: str = 'test_user'
+    PASSWORD: str = 'test_user_password'
+    UPLOAD_DIR: str = 'test_zip_dir'
     ftp: FTP
 
     def assertHasFile(self, file: str):
@@ -17,14 +18,12 @@ class TestFtpLoader(unittest.TestCase):
         self.assertIn(file, files)
 
     def setUp(self) -> None:
-        self.loader = FtpLoader(self.address, self.user, self.password)
-        self.loader.connect()
-        self.ftp = FTP(self.address, self.user, self.password)
+        self.loader = FtpLoader(self.ADDRESS, self.USER, self.PASSWORD)
+        self.ftp = FTP(self.ADDRESS, self.USER, self.PASSWORD)
         self.cleanRemote()
 
     def tearDown(self) -> None:
         self.cleanRemote()
-        self.loader.close()
         self.ftp.close()
         self.cleanArchives()
 
@@ -33,32 +32,32 @@ class TestFtpLoader(unittest.TestCase):
             self.ftp.delete(file)
 
     def cleanArchives(self):
-        for file in os.listdir(self.test_dir):
+        for file in os.listdir(self.TEST_DIR):
             if file.endswith('tar.gz'):
-                os.remove(os.path.join(self.test_dir, file))
+                os.remove(os.path.join(self.TEST_DIR, file))
 
     def test_create_ftp_loader(self):
         self.assertTrue(issubclass(FtpLoader, Uploader))
-        self.assertEqual(self.loader.address, self.address)
-        self.assertEqual(self.loader.user, self.user)
-        self.assertEqual(self.loader.password, self.password)
+        self.assertEqual(self.loader.address, self.ADDRESS)
+        self.assertEqual(self.loader.user, self.USER)
+        self.assertEqual(self.loader.password, self.PASSWORD)
 
     def test_upload_and_zip_directory(self):
-        directory = os.path.join(self.test_dir, 'test_zip_dir')
+        directory = os.path.join(self.TEST_DIR, self.UPLOAD_DIR)
 
         result_archive = self.loader.upload(directory)
 
-        self.assertEqual(result_archive, 'test_zip_dir.tar.gz')
+        self.assertEqual(result_archive, self.UPLOAD_DIR + '.tar.gz')
         self.assertHasFile(result_archive)
 
     def test_missed_direcory(self):
-        directory = os.path.join(self.test_dir, 'missed_directory')
+        directory = os.path.join(self.TEST_DIR, 'missed_directory')
         with self.assertRaises(UploadError):
             self.loader.upload(directory)
 
     def test_bad_credentials(self):
-        bad_user = 'bad_user'
-        bad_password = 'bad_password'
-        uploader = FtpLoader(self.address, bad_user, bad_password)
+        BAD_USER = 'bad_user'
+        BAD_PASSWORD = 'bad_password'
+        uploader = FtpLoader(self.ADDRESS, BAD_USER, BAD_PASSWORD)
         with self.assertRaises(UploadError):
-            uploader.connect()
+            uploader.upload(self.UPLOAD_DIR)
