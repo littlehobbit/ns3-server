@@ -15,20 +15,26 @@ class FtpLoader(Uploader):
         self.user = user
         self.password = password
 
+
     def upload(self, results: str) -> str:
         """ zip & upload result directory """
         try:
-            with FTP(self.address, self.user, self.password) as ftp:
-                archive_path = self._make_archive(results)
-                archive_name = os.path.basename(archive_path)
-                with open(archive_path, 'rb') as file:
-                    ftp.storbinary(f'STOR {archive_name}', file)
-                return archive_name
+            with FTP() as ftp:
+                self._connect(ftp)
+                path, name = self._make_archive(results)
+                with open(path, 'rb') as file:
+                    ftp.storbinary(f'STOR {name}', file)
+                return name
         except Exception as err:
             raise UploadError(f'Uploading error: {err}')
 
+    def _connect(self, ftp):
+        ftp.connect(self.address)
+        ftp.login(self.user, self.password)
+
     def _make_archive(self, path: str) -> str:
-        output_filename = path + '.tar.gz'
-        with tarfile.open(output_filename, "w:gz") as tar:
+        archive_path = path + '.tar.gz'
+        with tarfile.open(archive_path, "w:gz") as tar:
             tar.add(path, arcname=os.path.basename(path))
-        return output_filename
+        return archive_path, os.path.basename(archive_path)
+
