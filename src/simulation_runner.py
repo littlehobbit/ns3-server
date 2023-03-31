@@ -1,27 +1,31 @@
 import asyncio
-
-from threading import Thread
+import signal
 from concurrent.futures import ThreadPoolExecutor
 from subprocess import PIPE, Popen
-from signal import SIGSTOP
+from threading import Thread
+import os
 
+from flask import current_app as app
+
+from src.log import logger
 from src.notifier import Notifier, Status
 from src.runner import Runner
+
+from io import TextIOWrapper
 
 
 class SimulationRunner(Runner):
     executable: str
     notifier: Notifier
     _running = True
-    _task: asyncio.Task
+    process = None
 
     def __init__(self, executable: str, notifier: Notifier):
         self.executable = executable
         self.notifier = notifier
 
     def run(self, cwd: str, model_file: str):
-        self._task = asyncio.get_event_loop().create_task(
-            self._execute_process(cwd, model_file))
+        self._execute_process(cwd, model_file)
 
     def _notify_line(self, status: Status, line: str):
         line = line.strip()
@@ -29,47 +33,46 @@ class SimulationRunner(Runner):
             self.notifier.send(status, line)
 
     def is_running(self) -> bool:
-        if self._task is None:
-            return False
-        else:
-            return not self._task.done() and not self._task.cancelled()
+        if self.process is not None:
+            return self.process.poll() is None
+        return False
 
     def stop(self):
-        if self._task is not None:
-            self._task.cancel()
+        if self.process is not None and self.is_running():
+            self.process.send_signal(signal.SIGTERM)
 
-    async def wait(self):
-        if self._task is not None:
-            await self._task
+    def wait(self):
+        if self.process is not None:
+            self.process.wait()
 
-    async def _execute_process(self, cwd, model_file):
-        process = Popen(
-            args=[self.executable, '--xml', model_file],
-            cwd=cwd,
-            text=True,
-            universal_newlines=True,
-            stdout=PIPE, stderr=PIPE
-        )
+    def _execute_process(self, cwd: str, model_file: str):
+        logger.debug('Start simulation process')
+        with Popen(args=[self.executable, '--xml', model_file],
+                   cwd=cwd, text=True, universal_newlines=True,
+                   stdout=PIPE, stderr=PIPE) as process:
+            self.process = process
+            stdout, stderr = process.stdout, process.stderr
 
-        try:
-            with process as process:
-                stdout, stderr = process.stdout, process.stderr
+            os.set_blocking(stdout.fileno(), False)
+            os.set_blocking(stderr.fileno(), False)
 
-                while process.poll() is None:
-                    if stdout.readable():
-                        self._notify_line(Status.LOG, stdout.readline())
-                    if stderr.readable():
-                        self._notify_line(Status.ERROR, stderr.readline())
+            while process.poll() is None:
+                if stdout.readable():
+                    self._notify_line(Status.LOG, stdout.readline())
 
-                for last_out in stdout.readlines():
-                    self._notify_line(Status.LOG, last_out)
-                for last_err in stderr.readlines():
-                    self._notify_line(Status.LOG, last_err)
+                # BUG: stderr blocks execution
+                # if stderr.readable():
+                #     from_stderr = stderr.read()
+                #     self._notify_line(Status.ERROR, from_stderr)
 
-                return_code = process.wait()
-                if return_code != 0:
-                    self.notifier.send(
-                        Status.ERROR, f'simulation ended with return code {return_code}')
-        except asyncio.CancelledError as cancel:
-            if process.poll() is None:
-                process.send_signal(SIGSTOP)
+            for last_out in stdout.readlines():
+                self._notify_line(Status.LOG, last_out)
+
+            for last_err in stderr.readlines():
+                self._notify_line(Status.ERROR, last_err)
+
+            return_code = process.wait()
+            if return_code != 0:
+                err = f'Simulation ended with return code {return_code}'
+                logger.error(err)
+                self.notifier.send(Status.ERROR, err)

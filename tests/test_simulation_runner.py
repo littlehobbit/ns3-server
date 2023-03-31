@@ -8,9 +8,9 @@ from src.simulation_runner import SimulationRunner
 from src.notifier import Status
 
 
-class SimulationRunnerTest(unittest.IsolatedAsyncioTestCase):
-    # FIX: bad test dependency
-    EXECUTABLE: str = '/media/gataullin/FLASHKA/Project/simulation-core/build/simulation'
+class SimulationRunnerTest(unittest.TestCase):
+    # FIX: make relative path
+    EXECUTABLE: str = '/media/gataullin/FLASHKA1/Project/simulation-core/build/simulation'
     MODEL_FILE: str = 'model.xml'
 
     temp_test_dir: str
@@ -23,31 +23,21 @@ class SimulationRunnerTest(unittest.IsolatedAsyncioTestCase):
 
     def tearDown(self):
         self.runner.stop()
-        # Clean-up results of simulation
+        self.cleanUpArtifacts()
+
+    def cleanUpArtifacts(self):
         for file in os.listdir(self.temp_test_dir):
             if file.endswith('txt'):
                 os.remove(os.path.join(self.temp_test_dir, file))
 
-    async def test_run(self):
+    def test_run(self):
         self.runner.run(self.temp_test_dir, self.MODEL_FILE)
-        self.assertTrue(self.runner.is_running())
-
-        await self.runner.wait()
         self.assertFalse(self.runner.is_running())
 
         # assert has logs
         self.assertGreater(self.getNotifiedCount(Status.LOG), 0)
         # assert no errors
         self.assertEqual(self.getNotifiedCount(Status.ERROR), 0)
-
-    async def test_stop_after_run(self):
-        self.runner.run(self.temp_test_dir, self.MODEL_FILE)
-        self.assertTrue(self.runner.is_running())
-        self.runner.stop()
-
-        with self.assertRaises(asyncio.CancelledError):
-            await self.runner.wait()
-        self.assertFalse(self.runner.is_running())
 
     def getNotifiedCount(self, status: Status) -> int:
         args_list = self.notifier.send.call_args_list

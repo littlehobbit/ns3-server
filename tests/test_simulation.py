@@ -1,11 +1,12 @@
 import unittest
+from time import sleep
 from unittest.mock import Mock, call
-from src.simulation import Simulation
+
 from src.notifier import Status
+from src.simulation import Simulation
 from src.uploader import UploadError
 
 
-@unittest.skip('Need to fix simulation running')
 class SimulationTest(unittest.TestCase):
     MODEL = 'model.xml'
 
@@ -21,12 +22,18 @@ class SimulationTest(unittest.TestCase):
             notifier=self.notifier
         )
 
-        # Runner by defult is off
-        self.runner.is_running.return_value = False
-
     def test_simulation_stop(self):
-        self.runner.is_running.return_value = True
+        def side_effect(*args):
+            sleep(1)
+        self.runner.run.side_effect = side_effect
+
+        self.simulation.run(self.workdir, self.MODEL)
+        self.assertFalse(self.simulation.is_stoped())
+
         self.simulation.stop()
+        self.simulation.wait()
+
+        self.assertTrue(self.simulation.is_stoped())
         self.runner.stop.assert_called_once()
 
     def test_stop_stopped_simulation(self):
@@ -37,6 +44,7 @@ class SimulationTest(unittest.TestCase):
         self.uploader.upload.return_value = 'test-result.zip'
 
         self.simulation.run(self.workdir, self.MODEL)
+        self.simulation.wait()
 
         self.runner.run.assert_called_once_with(self.workdir, self.MODEL)
 
@@ -54,6 +62,7 @@ class SimulationTest(unittest.TestCase):
         self.runner.run.side_effect = RuntimeError('error')
 
         self.simulation.run(self.workdir, self.MODEL)
+        self.simulation.wait()
 
         self.notifier.send.assert_has_calls(
             [
@@ -66,6 +75,7 @@ class SimulationTest(unittest.TestCase):
     def test_notify_error_on_failed_upload(self):
         self.uploader.upload.side_effect = UploadError('error')
         self.simulation.run(self.workdir, self.MODEL)
+        self.simulation.wait()
         self.notifier.send.assert_has_calls([
             call(Status.START), call(Status.ERROR, 'error')
         ])

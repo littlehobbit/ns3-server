@@ -1,7 +1,9 @@
 import json
 from flask_socketio import SocketIO
 from src.notifier import Notifier, Status
-# from app import app
+
+from src.log import logger
+import logging
 
 
 class WebSocketNotifier(Notifier):
@@ -10,7 +12,7 @@ class WebSocketNotifier(Notifier):
         self.sio = sio
 
     def send(self, status: Status, msg: str = ''):
-        print(f'Send to clients status={status.name} msg={msg}')
+        logger.debug(f'Send to clients status={status.name} msg={msg}')
         self.sio.send(
             json.dumps({
                 'status': status.name,
