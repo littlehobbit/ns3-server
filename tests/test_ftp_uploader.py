@@ -4,7 +4,6 @@ from ftplib import FTP
 from src.ftp_loader import FtpLoader
 from src.uploader import Uploader, UploadError
 
-
 class TestFtpLoader(unittest.TestCase):
     TEST_DIR = os.path.join(os.getcwd(), 'tests')
     ADDRESS: str = '127.0.0.1'
