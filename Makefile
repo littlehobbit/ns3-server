@@ -5,4 +5,4 @@ test:
 	python3 -m unittest
 
 run:
-	flask run --debug
+	python ./app.py
