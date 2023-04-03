@@ -58,9 +58,13 @@ def start_simulation():
 @app.get('/stop')
 def stop_simulation():
     logger.info('Stoppping simulation')
-    simulation.stop()
-    simulation.wait()
-    return {'status': 'OK'}
+    try:
+        simulation.stop()
+        simulation.wait()
+        return {'status': 'OK'}
+    except Exception as err:
+        return {'error': str(err)}, 500
 
 
-ws.run(app, port=8000)
+if __name__ == '__main__':
+    ws.run(app, port=8000)
