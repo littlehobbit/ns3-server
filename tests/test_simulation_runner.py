@@ -9,8 +9,7 @@ from src.notifier import Status
 
 
 class SimulationRunnerTest(unittest.TestCase):
-    # FIX: make relative path
-    EXECUTABLE: str = '/media/gataullin/FLASHKA1/Project/simulation-core/build/simulation'
+    EXECUTABLE: str = os.path.abspath(os.path.join(os.getcwd(), os.pardir, 'simulation-core/build/simulation'))
     MODEL_FILE: str = 'model.xml'
 
     temp_test_dir: str
