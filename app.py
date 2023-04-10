@@ -19,7 +19,8 @@ from src.log import logger
 
 load_dotenv()
 
-
+ENV_PORT = os.getenv('NS3_SERVER_PORT')
+NS3_SERVER_PORT = 8000 if ENV_PORT is None else ENV_PORT
 FTP_SERVER = os.getenv('FTP_SERVER')
 FTP_USER = os.getenv('FTP_USER')
 FTP_PASSWORD = os.getenv('FTP_PASSWORD')
@@ -67,6 +68,6 @@ def stop_simulation():
 
 
 if __name__ == '__main__':
-    logger.info(f'Start running server on port 8000 ...')
-    ws.run(app, port=8000)
+    logger.info(f'Start running server on port {NS3_SERVER_PORT} ...')
+    ws.run(app, port=NS3_SERVER_PORT)
     logger.info(f'Stop server ...')
