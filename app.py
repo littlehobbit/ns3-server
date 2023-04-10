@@ -67,4 +67,6 @@ def stop_simulation():
 
 
 if __name__ == '__main__':
+    logger.info(f'Start running server on port 8000 ...')
     ws.run(app, port=8000)
+    logger.info(f'Stop server ...')
