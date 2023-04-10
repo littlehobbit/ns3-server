@@ -60,18 +60,17 @@ class Simulation:
         self._thread.start()
 
     def _do_run(self, workdir: str, file_name: str):
-        self.notifier.send(Status.START)
-
         try:
+            self.notifier.send(Status.START)
             self.runner.run(workdir, file_name)
             resulted_zip = self.uploader.upload(workdir)
+            self.notifier.send(Status.UPLOADED, resulted_zip)
+            self.notifier.send(Status.END)
         except Exception as err:
             logger.exception('Simulation error')
             self.notifier.send(Status.ERROR, str(err))
-            return
+    
 
-        self.notifier.send(Status.UPLOADED, resulted_zip)
-        self.notifier.send(Status.END)
 
     def stop(self):
         if self.is_stoped():
