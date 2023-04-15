@@ -25,4 +25,4 @@ This will install all dependencies. Now you can start server with `make run` com
 | /stop   | GET   | -               | Stops current running simulation            | 200 if ok, 500 with error message overwise |
 
 ## Usage
-See examples/send_model.sh for example
+See scripts/send_model.sh for example
