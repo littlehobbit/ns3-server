@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="udp_echo">
   <populate-routing-tables>true</populate-routing-tables>
-  <duration>20s</duration>
+  <duration>200s</duration>
   <precision>NS</precision>
 
-  <node id="0" name="Client">
+  <node name="Client">
     <device-list>
-      <device id="0"
-              name="eth0" 
-              type="Csma" >  
+      <device name="eth0" type="Csma">  
         <address value="10.1.22.222" netmask="255.255.255.0"/>
 
         <attributes>
@@ -33,9 +31,9 @@
     </applications>
   </node>
 
-  <node id="1" name="Server">
+  <node name="Server">
     <device-list>
-      <device id="0" name="eth0" type="Csma">
+      <device name="eth0" type="Csma">
         <address value="10.1.22.2" netmask="255.255.255.0"/>
           <attributes>
             <attribute key="TxQueue" value="ns3::DropTailQueue&lt;Packet&gt;[MaxSize=100p]"/>
@@ -56,7 +54,7 @@
   </node>
 
   <connections>
-    <connection id="0" name="Client-to-Server" type="Csma">
+    <connection name="Client-to-Server" type="Csma">
       <interfaces>
         <interface>Client/eth0</interface>
         <interface>Server/eth0</interface>
@@ -69,7 +67,6 @@
   </connections>
 
   <statistics>
-  <!-- TODO: listen tcp socket congestion window -->
     <registrator value_name="CWND" 
                  type="ns3::Uinteger32Probe" 
                  source="/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow" 
