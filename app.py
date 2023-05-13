@@ -5,7 +5,6 @@ from eventlet import monkey_patch; monkey_patch()
 
 import os
 
-import socketio
 from dotenv import load_dotenv
 from flask import Flask, request
 from flask_socketio import SocketIO
@@ -19,6 +18,8 @@ from src.log import logger
 
 load_dotenv()
 
+ENV_HOST = os.getenv('NS3_SERVER_HOST')
+NS3_SERVER_HOST = '0.0.0.0' if ENV_HOST is None else ENV_HOST
 ENV_PORT = os.getenv('NS3_SERVER_PORT')
 NS3_SERVER_PORT = 8000 if ENV_PORT is None else ENV_PORT
 FTP_SERVER = os.getenv('FTP_SERVER')
@@ -69,5 +70,5 @@ def stop_simulation():
 
 if __name__ == '__main__':
     logger.info(f'Start running server on port {NS3_SERVER_PORT} ...')
-    ws.run(app, port=NS3_SERVER_PORT)
+    ws.run(app, host=NS3_SERVER_HOST, port=NS3_SERVER_PORT)
     logger.info(f'Stop server ...')
